@@ -89,7 +89,7 @@ set -x
 set -e
 mount -o remount,rw /mnt/part2/dom0
 sed -i "1,/class/s/class/bdf/g" /mnt/part2/dom0/usr/share/xenmgr-1.0/templates/default/service-ndvm
-sed -i "s/0x0200/0000:%s:00.00/g" /mnt/part2/dom0/usr/share/xenmgr-1.0/templates/default/service-ndvm
+sed -i "s/0x0200/0000:%s:00.0/g" /mnt/part2/dom0/usr/share/xenmgr-1.0/templates/default/service-ndvm
 echo starting postintall >&2
 sed -i -e 's/xencons=xvc0/xencons=xvc0 rw/' /mnt/part2/dom0/usr/share/xenmgr-1.0/templates/*/service-ndvm
 sed -i -e 's/SELINUX=enforcing/SELINUX=permissive/' /mnt/part2/dom0/etc/selinux/config
@@ -107,6 +107,7 @@ ANSWERFILE_ENDING = """
 set -x 
 set -e
 echo starting postintall >&2
+mount -o remount,rw /mnt/part2/dom0
 sed -i -e 's/xencons=xvc0/xencons=xvc0 rw/' /mnt/part2/dom0/usr/share/xenmgr-1.0/templates/*/service-ndvm
 sed -i -e 's/SELINUX=enforcing/SELINUX=permissive/' /mnt/part2/dom0/etc/selinux/config
 echo 'system_r:sshd_t:s0 sysadm_r:sysadm_t:s0' >> /mnt/part2/dom0/etc/selinux/xc_policy/contexts/users/root
@@ -126,7 +127,7 @@ class AmbiguousRequest(Exception):
 class InvalidMacAddress(Exception):
     """Mac address is invalid"""
 
-def pxe_filename(dut, mac_address): 
+def pxe_filename(dut, mac_address):
     """Work out the full pathname to the file that pxelinux will read from the server"""
     if not PXE_DIR:
         raise PxeServerDirectoryUnspecified()
@@ -136,6 +137,9 @@ def pxe_filename(dut, mac_address):
     if not match('([0-9a-f]{2}-){5}([0-9a-f]{2})', mac_address_munged):
         raise InvalidMacAddress(mac_address_munged)
     return join(PXE_DIR, 'pxelinux.cfg', '01-'+mac_address_munged)
+
+def pxe_localboot(dut, mac_address):
+    os.remove(pxe_filename(dut, mac_address))
 
 class NoTFTPActivityTimeout(Exception):
     pass
